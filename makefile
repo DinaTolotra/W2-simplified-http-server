@@ -16,7 +16,7 @@ launch: $(builddir)/server
 	@$(LOG) "LAUNCHING 'server' PROGRAM"
 	@./$(builddir)/server
 
-$(builddir)/server: build main.c
+$(builddir)/server: build $(builddir)/libio.a main.c
 	@$(LOG) "COMPILING 'server' PROGRAM"
 	@$(CC) $(W) $(F) -o $@ main.c -L$(libdir) $(lib) -I$(includedir)
 
