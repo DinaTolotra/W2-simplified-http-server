@@ -1,85 +1,94 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <fcntl.h>
-
 #include "io.h"
+#include "inet.h"
 
-#define stdio_putchar(c) io_putchar(STDOUT_FILENO, c)
-#define stdio_putstr(str) io_putstr(STDOUT_FILENO, str)
-#define stderr_putstr(str) io_putstr(STDERR_FILENO, str)
-#define stdio_getchar(c) io_getchar(STDIN_FILENO, c)
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 
-int main(void) {
-	struct sockaddr_in addr, cli_addr;
-	socklen_t len;
-	int sockfd;
-	int cli_sockfd;
-	int fd;
-	char buf[1024];
+#define BUF_SIZE 1024
+#define NOT_FOUND_HEADER "HTTP/1.1 404 NOT FOUND\n" "\n"
+#define HEADER "HTTP/1.1 200 OK\n" "Content-type: application/octet-stream\n" "\n"
+
+void cycle_addr(inet_info_t *server, char *r_addr, int *r_port);
+void send_file(inet_info_t *dst, char *file_name);
+
+void log_error();
+
+int main(int ac, char **av) {
+	inet_info_t server;
+	inet_info_t client;
+	char buf[BUF_SIZE];
+	char *file_name;
+	char *r_addr;
+	int r_port;
 	int ret;
 
-	addr.sin_port = htons(3000);
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	r_port = 3000;
+	r_addr = "0.0.0.0";
+	file_name = av[ac != 1];
 
-	sockfd = socket(addr.sin_family,
-					SOCK_STREAM,
-					0);
-	if (sockfd == -1) {
-		stderr_putstr("[ERR] Socket call error\n");
-		return errno;
-	} else {
-		stdio_putstr("Socket created\n");
-	}
-
-	ret = bind(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
+	ret = inet_init(&server);
 	if (ret == -1) {
-		stderr_putstr("[ERR] Bind call error\n");
-		close(sockfd);
+		log_error();
 		return errno;
-	} else {
-		stdio_putstr("Socket binded to address\n");
 	}
+	cycle_addr(&server, r_addr, &r_port);
 
-	stdio_putstr("Listening...\n");
-	ret = listen(sockfd, 10);
+	io_putstr(STDOUT_FILENO, "Server started at ");
+	io_putstr(STDOUT_FILENO, r_addr);
+	io_putchar(STDOUT_FILENO, ':');
+	io_putnb(STDOUT_FILENO, r_port);
+	io_putchar(STDOUT_FILENO, '\n');
+	ret = inet_listen(&server, 1);
 	if (ret == -1) {
-		stderr_putstr("[ERR] Listen call error\n");
-		close(sockfd);
+		log_error();
+		inet_close(&server);
 		return errno;
 	}
 
-	cli_sockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &len);
-	if (cli_sockfd == -1) {
-		stderr_putstr("[ERR] Listen call error\n");
-		close(sockfd);
-		return errno;
-	} else {
-		stdio_putstr("Client connected\n");
-	}
+	client = inet_accept(&server);
 
-	read(cli_sockfd, buf, 1024);
-	stdio_putstr(buf);
-	fd = open("asset/index.html", O_RDONLY);
-	io_putstr(cli_sockfd,
-			"HTTP/1.1 200 OK\n"
-			"content-type: text/html\n"
-			"\n"
-	);
-	while ((ret = read(fd, buf, 1024))) {
-		write(cli_sockfd, buf, ret);
-	}
+	inet_receive_from(&client, buf, BUF_SIZE);
+	send_file(&client, file_name);
 
-	ret = close(sockfd);
-	if (ret == -1) {
-		stderr_putstr("[ERR] Close call error\n");
-		return errno;
-	} else {
-		stdio_putstr("Socket closed\n");
-	}
+	inet_close(&client);
+	inet_close(&server);
 	return 0;
+}
+
+void cycle_addr(inet_info_t *server, char *r_addr, int *r_port) {
+	ssize_t ret;
+	int stop;
+
+	stop = 0;
+	while (!stop) {
+		ret = inet_set_addr(server, r_addr, *r_port);
+		if (ret == -1) (*r_port)++;
+		else stop = 1;
+	}
+}
+
+void send_file(inet_info_t *dst, char *file_name) {
+	char buf[BUF_SIZE];
+	int ret;
+	int fd;
+
+	fd = open(file_name, O_RDONLY);
+	if (fd == -1) {
+		log_error();
+		inet_send_to(dst, NOT_FOUND_HEADER);
+		return ;
+	}
+	inet_send_to(dst, HEADER);
+	while ((ret = read(fd, buf, BUF_SIZE))) {
+		write(dst->socket_fd, buf, ret);
+	}
+}
+
+void log_error() {
+	io_putstr(STDERR_FILENO, "[ERR ");
+	io_putnb(STDERR_FILENO, errno);
+	io_putchar(STDERR_FILENO, ']');
+	io_putstr(STDERR_FILENO, strerror(errno));
+	io_putchar(STDERR_FILENO, '\n');
 }
