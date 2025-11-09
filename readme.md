@@ -12,7 +12,7 @@ No external dependency.
 make build/server  
 ./build/server [file]  
 ```
-### Reference
+## Reference
  - (book)   Hands-on network programming with C - by Lewis Van Winkle
  - (manual) man socket(2): for socket file creation
  - (manual) man bind(2): for address assignation
@@ -25,3 +25,5 @@ make build/server
  - (manual) man errno(3): for error handling
  - (manual) man strerror(3): for error log
  - (documentation) [mdn](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers): for HTTP (as a protocol) reference
+## See also
+ - Previous week:  [network interface list](https://github.com/DinaTolotra/W1-network-interface-list)
