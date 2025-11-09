@@ -22,4 +22,6 @@ make build/server
  - (manual) man open(2): for file opening/closing
  - (manual) man htons(3): for port translation between readable and machine
  - (manual) man inet_addr(3): for address translation between readable and machine
+ - (manual) man errno(3): for error handling
+ - (manual) man strerror(3): for error log
  - (documentation) [mdn](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers): for HTTP (as a protocol) reference
