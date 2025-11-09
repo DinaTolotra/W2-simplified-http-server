@@ -19,7 +19,7 @@ inet_info_t inet_accept(inet_info_t *server);
 int inet_send_to(inet_info_t *dst, char *str);
 int inet_receive_from(inet_info_t *src, char *str, int size);
 
-char *in_addr_to_str(in_addr_t addr);
-char *in_port_to_str(in_port_t port);
+void in_addr_to_readable(in_addr_t addr, char *r_addr);
+int in_port_to_readable(in_port_t port);
 
 #endif // INET_H

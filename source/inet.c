@@ -5,7 +5,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
@@ -134,15 +133,12 @@ int inet_receive_from(inet_info_t *src, char *str, int size) {
 	return ret;
 }
 
-char *in_addr_to_readable(in_addr_t addr) {
+void in_addr_to_readable(in_addr_t addr, char *r_addr) {
 	struct in_addr _addr;
-	char *r_addr;
 
 	_addr.s_addr = addr;
-	r_addr = malloc(INET_ADDRSTRLEN + 1);
 	inet_ntop(FAMILY, &_addr, r_addr, INET_ADDRSTRLEN);
 	r_addr[INET_ADDRSTRLEN] = 0;
-	return r_addr;
 }
 
 int in_port_to_readable(in_port_t port) {
