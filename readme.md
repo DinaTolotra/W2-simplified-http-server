@@ -27,3 +27,4 @@ make build/server
  - (documentation) [mdn](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers): for HTTP (as a protocol) reference
 ## See also
  - Previous week:  [network interface list](https://github.com/DinaTolotra/W1-network-interface-list)
+ - Next week: [http/1.1 head parser](https://github.com/DinaTolotra/W3-http-head-parser)
